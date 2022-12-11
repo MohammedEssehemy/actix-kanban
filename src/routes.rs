@@ -1,17 +1,16 @@
-use std::pin::Pin;
 use actix_web::{
-    web::{Data, Json, Path, scope},
-    http::StatusCode,
-    error::InternalError,
     dev::{HttpServiceFactory, Payload},
-    FromRequest,
-    HttpRequest,
-    HttpResponse
+    error::InternalError,
+    http::StatusCode,
+    web::{scope, Data, Json, Path},
+    FromRequest, HttpRequest, HttpResponse,
 };
 use futures::{future, Future, FutureExt};
-use crate::StdErr;
+use std::pin::Pin;
+
 use crate::db::Db;
 use crate::models::*;
+use crate::StdErr;
 
 impl FromRequest for Token {
     type Error = InternalError<&'static str>;
@@ -117,17 +116,14 @@ fn to_ok(_: ()) -> HttpResponse {
 
 #[actix_web::get("/boards")]
 async fn boards(db: Data<Db>, _t: Token) -> Result<Json<Vec<Board>>, InternalError<StdErr>> {
-    db.boards()
-        .await
-        .map(Json)
-        .map_err(to_internal_error)
+    db.boards().await.map(Json).map_err(to_internal_error)
 }
 
 #[actix_web::post("/boards")]
 async fn create_board(
     db: Data<Db>,
     create_board: Json<CreateBoard>,
-    _t: Token
+    _t: Token,
 ) -> Result<Json<Board>, InternalError<StdErr>> {
     db.create_board(create_board.into_inner())
         .await
@@ -139,7 +135,7 @@ async fn create_board(
 async fn board_summary(
     db: Data<Db>,
     board_id: Path<i64>,
-    _t: Token
+    _t: Token,
 ) -> Result<Json<BoardSummary>, InternalError<StdErr>> {
     db.board_summary(board_id.into_inner())
         .await
@@ -151,7 +147,7 @@ async fn board_summary(
 async fn delete_board(
     db: Data<Db>,
     board_id: Path<i64>,
-    _t: Token
+    _t: Token,
 ) -> Result<HttpResponse, InternalError<StdErr>> {
     db.delete_board(board_id.into_inner())
         .await
@@ -165,7 +161,7 @@ async fn delete_board(
 async fn cards(
     db: Data<Db>,
     board_id: Path<i64>,
-    _t: Token
+    _t: Token,
 ) -> Result<Json<Vec<Card>>, InternalError<StdErr>> {
     db.cards(board_id.into_inner())
         .await
@@ -177,7 +173,7 @@ async fn cards(
 async fn create_card(
     db: Data<Db>,
     create_card: Json<CreateCard>,
-    _t: Token
+    _t: Token,
 ) -> Result<Json<Card>, InternalError<StdErr>> {
     db.create_card(create_card.into_inner())
         .await
@@ -190,7 +186,7 @@ async fn update_card(
     db: Data<Db>,
     card_id: Path<i64>,
     update_card: Json<UpdateCard>,
-    _t: Token
+    _t: Token,
 ) -> Result<Json<Card>, InternalError<StdErr>> {
     db.update_card(card_id.into_inner(), update_card.into_inner())
         .await
@@ -202,7 +198,7 @@ async fn update_card(
 async fn delete_card(
     db: Data<Db>,
     card_id: Path<i64>,
-    _t: Token
+    _t: Token,
 ) -> Result<HttpResponse, InternalError<StdErr>> {
     db.delete_card(card_id.into_inner())
         .await

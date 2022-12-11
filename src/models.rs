@@ -1,32 +1,33 @@
-// for authentication
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, Type};
 
-#[derive(sqlx::FromRow)]
+#[derive(FromRow)]
 pub struct Token {
     pub id: String,
-    pub expired_at: chrono::DateTime<chrono::Utc>,
+    pub expired_at: DateTime<Utc>,
 }
 
 // for GET requests
-
-#[derive(Debug, serde::Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Board {
     pub id: i64,
     pub name: String,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: DateTime<Utc>,
 }
 
-#[derive(serde::Serialize, sqlx::FromRow)]
+#[derive(Serialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Card {
     pub id: i64,
     pub board_id: i64,
     pub description: String,
     pub status: Status,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: DateTime<Utc>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, sqlx::Type)]
+#[derive(Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 #[sqlx(rename_all = "camelCase")]
 pub enum Status {
@@ -35,7 +36,7 @@ pub enum Status {
     Done,
 }
 
-#[derive(Default, serde::Serialize)]
+#[derive(Default, Serialize)]
 pub struct BoardSummary {
     pub todo: i64,
     pub doing: i64,
@@ -55,14 +56,14 @@ impl From<Vec<(i64, Status)>> for BoardSummary {
         summary
     }
 }
-// for POST requests
 
-#[derive(serde::Deserialize)]
+// for POST requests
+#[derive(Deserialize)]
 pub struct CreateBoard {
     pub name: String,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateCard {
     pub board_id: i64,
@@ -70,8 +71,7 @@ pub struct CreateCard {
 }
 
 // for PATCH requests
-
-#[derive(serde::Deserialize)]
+#[derive(Deserialize)]
 pub struct UpdateCard {
     pub description: String,
     pub status: Status,

@@ -1,6 +1,9 @@
-// src/db.rs
+use sqlx::{
+    postgres::{PgPoolOptions, Postgres},
+    query, query_as, Pool,
+};
+use std::env;
 
-use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
 use crate::models::*;
 use crate::StdErr;
 
@@ -11,41 +14,40 @@ pub struct Db {
 
 impl Db {
     pub async fn connect() -> Result<Self, StdErr> {
-        let db_url = std::env::var("DATABASE_URL")?;
+        let db_url = env::var("DATABASE_URL")?;
         let pool = PgPoolOptions::new().connect(&db_url).await?;
-        Ok(Db { pool })
+        Ok(Self { pool })
     }
 
-     // token methods
 
     pub async fn validate_token<T: AsRef<str>>(&self, token_id: T) -> Result<Token, StdErr> {
-       let token_id = token_id.as_ref();
-       let token = sqlx::query_as("SELECT * FROM tokens WHERE id = $1 AND expired_at > current_timestamp")
-           .bind(token_id)
-           .fetch_one(&self.pool)
-           .await?;
-       Ok(token)
+        let token_id = token_id.as_ref();
+        let token =
+            query_as("SELECT * FROM tokens WHERE id = $1 AND expired_at > current_timestamp")
+                .bind(token_id)
+                .fetch_one(&self.pool)
+                .await?;
+        Ok(token)
     }
 
     pub async fn boards(&self) -> Result<Vec<Board>, StdErr> {
-        let boards = sqlx::query_as("SELECT * FROM boards")
+        let boards = query_as("SELECT * FROM boards")
             .fetch_all(&self.pool)
             .await?;
         Ok(boards)
     }
 
     pub async fn board_summary(&self, board_id: i64) -> Result<BoardSummary, StdErr> {
-        let counts: Vec<(i64, Status)> = sqlx::query_as(
-            "SELECT count(*), status FROM cards WHERE board_id = $1 GROUP BY status",
-        )
-        .bind(board_id)
-        .fetch_all(&self.pool)
-        .await?;
+        let counts: Vec<(i64, Status)> =
+            query_as("SELECT count(*), status FROM cards WHERE board_id = $1 GROUP BY status")
+                .bind(board_id)
+                .fetch_all(&self.pool)
+                .await?;
         Ok(counts.into())
     }
 
     pub async fn create_board(&self, create_board: CreateBoard) -> Result<Board, StdErr> {
-        let board = sqlx::query_as("INSERT INTO boards (name) VALUES ($1) RETURNING *")
+        let board = query_as("INSERT INTO boards (name) VALUES ($1) RETURNING *")
             .bind(&create_board.name)
             .fetch_one(&self.pool)
             .await?;
@@ -53,7 +55,7 @@ impl Db {
     }
 
     pub async fn delete_board(&self, board_id: i64) -> Result<(), StdErr> {
-        sqlx::query("DELETE FROM boards WHERE id = $1")
+        query("DELETE FROM boards WHERE id = $1")
             .bind(board_id)
             .execute(&self.pool)
             .await?;
@@ -61,7 +63,7 @@ impl Db {
     }
 
     pub async fn cards(&self, board_id: i64) -> Result<Vec<Card>, StdErr> {
-        let cards = sqlx::query_as("SELECT * FROM cards WHERE board_id = $1")
+        let cards = query_as("SELECT * FROM cards WHERE board_id = $1")
             .bind(board_id)
             .fetch_all(&self.pool)
             .await?;
@@ -70,7 +72,7 @@ impl Db {
 
     pub async fn create_card(&self, create_card: CreateCard) -> Result<Card, StdErr> {
         let card =
-            sqlx::query_as("INSERT INTO cards (board_id, description) VALUES ($1, $2) RETURNING *")
+            query_as("INSERT INTO cards (board_id, description) VALUES ($1, $2) RETURNING *")
                 .bind(&create_card.board_id)
                 .bind(&create_card.description)
                 .fetch_one(&self.pool)
@@ -79,19 +81,18 @@ impl Db {
     }
 
     pub async fn update_card(&self, card_id: i64, update_card: UpdateCard) -> Result<Card, StdErr> {
-        let card = sqlx::query_as(
-            "UPDATE cards SET description = $1, status = $2 WHERE id = $3 RETURNING *",
-        )
-        .bind(&update_card.description)
-        .bind(&update_card.status)
-        .bind(card_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let card =
+            query_as("UPDATE cards SET description = $1, status = $2 WHERE id = $3 RETURNING *")
+                .bind(&update_card.description)
+                .bind(&update_card.status)
+                .bind(card_id)
+                .fetch_one(&self.pool)
+                .await?;
         Ok(card)
     }
 
     pub async fn delete_card(&self, card_id: i64) -> Result<(), StdErr> {
-        sqlx::query("DELETE FROM cards WHERE id = $1")
+        query("DELETE FROM cards WHERE id = $1")
             .bind(card_id)
             .execute(&self.pool)
             .await?;

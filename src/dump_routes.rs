@@ -1,15 +1,12 @@
-use serde::{
-    Deserialize,
-    de::Error
-};
+use actix_files::NamedFile;
 use actix_web::{
-    get, 
-    HttpResponse, 
-    HttpRequest, 
-    Responder,
-    web::{Path, Data, Json, scope}, 
-    body::BoxBody, dev::HttpServiceFactory
+    body::BoxBody,
+    dev::HttpServiceFactory,
+    get,
+    web::{scope, Data, Json, Path},
+    HttpRequest, HttpResponse, Responder,
 };
+use serde::de::{Deserialize, Deserializer, Error};
 
 use crate::{db::Db, models::Status};
 
@@ -21,14 +18,14 @@ pub async fn hello_world() -> impl Responder {
 // actix_web::web::Path can extract anything out of the
 // URL path as long as it impls serde::Deserialize
 #[get("/echo/{string}/{num}/{maybe}/etc")]
-pub async fn echo_path(path: Path<(String, usize, bool)>) -> impl Responder {
-    let (string, num, maybe) = path.into_inner();
+pub async fn echo_path(params: Path<(String, usize, bool)>) -> impl Responder {
+    let (string, num, maybe) = params.into_inner();
     format!("got string {}, num {}, and maybe {}", string, num, maybe)
 }
 
 #[get("/cargo")]
 pub async fn returns_cargo() -> impl Responder {
-    actix_files::NamedFile::open_async("Cargo.toml").await
+    NamedFile::open_async("Cargo.toml").await
 }
 // custom type example
 pub struct EvenNumber(i32);
@@ -37,7 +34,7 @@ pub struct EvenNumber(i32);
 impl<'de> Deserialize<'de> for EvenNumber {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let value = i32::deserialize(deserializer)?;
         if value % 2 == 0 {
@@ -67,7 +64,6 @@ impl Responder for EvenNumber {
     }
 }
 
-
 // but now we can extract EvenNumbers directly from the Path:
 #[get("/even/{even_num}")]
 pub async fn echo_even(path: Path<EvenNumber>) -> impl Responder {
@@ -75,19 +71,15 @@ pub async fn echo_even(path: Path<EvenNumber>) -> impl Responder {
     even_num
 }
 
-
 #[get("/use/db")]
 pub async fn use_db(db: Data<Db>) -> impl Responder {
-   db.boards().await.map(Json)
+    db.boards().await.map(Json)
 }
-
-
 
 #[get("/example/json")]
 pub async fn return_json() -> Json<Status> {
     Json(Status::Todo)
 }
-
 
 pub fn api() -> impl HttpServiceFactory + 'static {
     scope("/dump")

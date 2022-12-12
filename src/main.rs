@@ -9,10 +9,8 @@ mod routes;
 
 use db::Db;
 
-type StdErr = Box<dyn std::error::Error>;
-
 #[actix_web::main]
-async fn main() -> Result<(), StdErr> {
+async fn main() -> Result<(), anyhow::Error> {
     // loads env variables from .env
     dotenv().ok();
     logger::init()?;

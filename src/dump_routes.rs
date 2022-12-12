@@ -4,7 +4,7 @@ use actix_web::{
     dev::HttpServiceFactory,
     get,
     web::{scope, Data, Json, Path},
-    HttpRequest, HttpResponse, Responder,
+    HttpRequest, HttpResponse, Responder, error::InternalError, http::StatusCode,
 };
 use serde::de::{Deserialize, Deserializer, Error};
 
@@ -73,7 +73,7 @@ pub async fn echo_even(path: Path<EvenNumber>) -> impl Responder {
 
 #[get("/use/db")]
 pub async fn use_db(db: Data<Db>) -> impl Responder {
-    db.boards().await.map(Json)
+    db.boards().await.map(Json).map_err(|e| InternalError::new(e, StatusCode::INTERNAL_SERVER_ERROR))
 }
 
 #[get("/example/json")]

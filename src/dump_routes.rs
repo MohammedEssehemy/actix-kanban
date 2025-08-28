@@ -67,8 +67,7 @@ impl Responder for EvenNumber {
 // but now we can extract EvenNumbers directly from the Path:
 #[get("/even/{even_num}")]
 pub async fn echo_even(path: Path<EvenNumber>) -> impl Responder {
-    let even_num = path.into_inner();
-    even_num
+    path.into_inner()
 }
 
 #[get("/use/db")]

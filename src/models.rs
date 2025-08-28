@@ -1,15 +1,14 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Type};
 
-#[derive(FromRow)]
+#[derive(sqlx::FromRow)]
 pub struct Token {
     pub id: String,
     pub expired_at: DateTime<Utc>,
 }
 
 // for GET requests
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Board {
     pub id: i64,
@@ -17,7 +16,7 @@ pub struct Board {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Serialize, FromRow)]
+#[derive(Serialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Card {
     pub id: i64,
@@ -27,9 +26,9 @@ pub struct Card {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Serialize, Deserialize, Type)]
+#[derive(Serialize, Deserialize, sqlx::Type)]
 #[serde(rename_all = "camelCase")]
-#[sqlx(rename_all = "camelCase")]
+#[sqlx(type_name = "status", rename_all = "lowercase")]
 pub enum Status {
     Todo,
     Doing,

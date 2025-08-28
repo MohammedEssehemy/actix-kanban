@@ -72,7 +72,7 @@ impl Db {
     pub async fn create_card(&self, create_card: CreateCard) -> Result<Card, anyhow::Error> {
         let card =
             query_as("INSERT INTO cards (board_id, description) VALUES ($1, $2) RETURNING *")
-                .bind(&create_card.board_id)
+                .bind(create_card.board_id)
                 .bind(&create_card.description)
                 .fetch_one(&self.pool)
                 .await?;

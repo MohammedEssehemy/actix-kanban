@@ -4,7 +4,9 @@ use sqlx::{FromRow, Type};
 
 #[derive(FromRow)]
 pub struct Token {
+    #[allow(dead_code)]
     pub id: String,
+    #[allow(dead_code)]
     pub expired_at: DateTime<Utc>,
 }
 
